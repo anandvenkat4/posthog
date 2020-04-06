@@ -128,6 +128,7 @@ class Team(models.Model):
     app_urls: ArrayField = ArrayField(models.CharField(max_length=200, null=True, blank=True), default=list)
     name: models.CharField = models.CharField(max_length=200, null=True, blank=True)
     opt_out_capture: models.BooleanField = models.BooleanField(default=False)
+    slack_incoming_webhook: models.CharField = models.CharField(max_length=200, null=True, blank=True)
 
     objects = TeamManager()
 
@@ -380,6 +381,7 @@ class Action(models.Model):
     created_by: models.ForeignKey = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     deleted: models.BooleanField = models.BooleanField(default=False)
     events: models.ManyToManyField = models.ManyToManyField(Event, blank=True)
+    post_to_slack: models.BooleanField = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
