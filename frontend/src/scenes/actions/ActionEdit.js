@@ -10,25 +10,16 @@ export class ActionEdit extends Component {
 
         this.state = {
             action: { name: '', steps: [] },
+            showSlackCheckbox: props.user && props.user.team && props.user.team.slack_incoming_webhook,
         }
-        this.params =
-            '?include_count=1' +
-            (props.temporaryToken
-                ? '&temporary_token=' + props.temporaryToken
-                : '')
+        this.params = '?include_count=1' + (props.temporaryToken ? '&temporary_token=' + props.temporaryToken : '')
         this.fetchAction.call(this)
         this.onSubmit = this.onSubmit.bind(this)
     }
     fetchAction() {
         if (this.props.actionId) {
             return api
-                .get(
-                    this.props.apiURL +
-                        'api/action/' +
-                        this.props.actionId +
-                        '/' +
-                        this.params
-                )
+                .get(this.props.apiURL + 'api/action/' + this.props.actionId + '/' + this.params)
                 .then(action => this.setState({ action }))
         }
         // If it's a new action, add an empty step
@@ -58,32 +49,22 @@ export class ActionEdit extends Component {
                 })
         }
         let steps = this.state.action.steps.map(step => {
-            if (step.event == '$pageview')
-                step.selection = ['url', 'url_matching']
-            if (step.event != '$pageview' && step.event != '$autocapture')
-                step.selection = []
+            if (step.event == '$pageview') step.selection = ['url', 'url_matching']
+            if (step.event != '$pageview' && step.event != '$autocapture') step.selection = []
             if (!step.selection) return step
             let data = {}
             Object.keys(step).map(key => {
-                data[key] =
-                    key == 'id' ||
-                    key == 'event' ||
-                    step.selection.indexOf(key) > -1
-                        ? step[key]
-                        : null
+                data[key] = key == 'id' || key == 'event' || step.selection.indexOf(key) > -1 ? step[key] : null
             })
             return data
         })
         if (this.state.action.id) {
             return api
-                .update(
-                    this.props.apiURL +
-                        'api/action/' +
-                        this.state.action.id +
-                        '/' +
-                        this.params,
-                    { name: this.state.action.name, steps }
-                )
+                .update(this.props.apiURL + 'api/action/' + this.state.action.id + '/' + this.params, {
+                    name: this.state.action.name,
+                    post_to_slack: this.state.action.post_to_slack,
+                    steps,
+                })
                 .then(save)
                 .catch(error)
         }
@@ -112,14 +93,8 @@ export class ActionEdit extends Component {
         )
 
         return (
-            <div
-                className={isEditor ? '' : 'card'}
-                style={{ marginTop: isEditor ? 8 : '' }}
-            >
-                <form
-                    className={isEditor ? '' : 'card-body'}
-                    onSubmit={e => e.preventDefault()}
-                >
+            <div className={isEditor ? '' : 'card'} style={{ marginTop: isEditor ? 8 : '' }}>
+                <form className={isEditor ? '' : 'card-body'} onSubmit={e => e.preventDefault()}>
                     <input
                         autoFocus
                         required
@@ -135,9 +110,7 @@ export class ActionEdit extends Component {
 
                     {action.count > -1 && (
                         <div>
-                            <small className="text-muted">
-                                Matches {action.count} events
-                            </small>
+                            <small className="text-muted">Matches {action.count} events</small>
                         </div>
                     )}
 
@@ -165,15 +138,12 @@ export class ActionEdit extends Component {
                                 actionId={action.id}
                                 simmer={simmer}
                                 onDelete={() => {
-                                    action.steps = action.steps.filter(
-                                        s => s.id != step.id
-                                    )
+                                    action.steps = action.steps.filter(s => s.id != step.id)
                                     this.setState({ action: action })
                                 }}
                                 onChange={newStep => {
                                     action.steps = action.steps.map(s =>
-                                        (step.id && s.id == step.id) ||
-                                        (step.isNew && s.isNew === step.isNew)
+                                        (step.id && s.id == step.id) || (step.isNew && s.isNew === step.isNew)
                                             ? {
                                                   id: step.id,
                                                   isNew: step.isNew,
@@ -187,30 +157,33 @@ export class ActionEdit extends Component {
                         </>
                     ))}
 
-                    <br />
-
-                    {this.state.saved && !isEditor && (
-                        <p className="text-success">Action saved.</p>
+                    {!isEditor && this.state.showSlackCheckbox ? (
+                        <div style={{ marginTop: 20, marginBottom: 15 }}>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    onChange={e => {
+                                        this.setState({ action: { ...action, post_to_slack: e.target.checked } })
+                                    }}
+                                    checked={action.post_to_slack}
+                                />
+                                &nbsp;Post to Slack when this action is triggered
+                            </label>
+                        </div>
+                    ) : (
+                        <br />
                     )}
+
+                    {this.state.saved && !isEditor && <p className="text-success">Action saved.</p>}
 
                     {this.state.error && (
                         <p className="text-danger">
                             Action with this name already exists.{' '}
-                            <a
-                                href={
-                                    this.props.apiURL +
-                                    'action/' +
-                                    this.state.error_id
-                                }
-                            >
-                                Click here to edit.
-                            </a>
+                            <a href={this.props.apiURL + 'action/' + this.state.error_id}>Click here to edit.</a>
                         </p>
                     )}
 
-                    {isEditor ? (
-                        <div style={{ marginBottom: 20 }}>{addGroup}</div>
-                    ) : null}
+                    {isEditor ? <div style={{ marginBottom: 20 }}>{addGroup}</div> : null}
 
                     <div className={isEditor ? 'btn-group save-buttons' : ''}>
                         {!isEditor ? addGroup : null}
