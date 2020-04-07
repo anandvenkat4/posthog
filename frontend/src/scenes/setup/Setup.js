@@ -9,9 +9,12 @@ import { userLogic } from '../userLogic'
 import { DeleteDemoData } from './DeleteDemoData'
 import { SlackIntegration } from 'scenes/setup/SlackIntegration'
 import { ChangePassword } from './ChangePassword'
+import { useAnchor } from 'lib/hooks/useAnchor'
 
-export function Setup() {
+export function Setup({ history }) {
     const { user } = useValues(userLogic)
+
+    useAnchor(history.location.hash)
 
     return (
         <div>
