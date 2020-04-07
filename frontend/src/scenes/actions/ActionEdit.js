@@ -3,6 +3,7 @@ import api from '../../lib/api'
 import { uuid } from '../../lib/utils'
 import PropTypes from 'prop-types'
 import { ActionStep } from './ActionStep'
+import { Link } from 'react-router-dom'
 
 export class ActionEdit extends Component {
     constructor(props) {
@@ -10,7 +11,7 @@ export class ActionEdit extends Component {
 
         this.state = {
             action: { name: '', steps: [] },
-            showSlackCheckbox: props.user && props.user.team && props.user.team.slack_incoming_webhook,
+            slackEnabled: props.user && props.user.team && props.user.team.slack_incoming_webhook,
         }
         this.params = '?include_count=1' + (props.temporaryToken ? '&temporary_token=' + props.temporaryToken : '')
         this.fetchAction.call(this)
@@ -157,18 +158,22 @@ export class ActionEdit extends Component {
                         </>
                     ))}
 
-                    {!isEditor && this.state.showSlackCheckbox ? (
+                    {!isEditor ? (
                         <div style={{ marginTop: 20, marginBottom: 15 }}>
-                            <label>
+                            <label className={this.state.slackEnabled ? '' : 'disabled'} style={{ marginRight: 5 }}>
                                 <input
                                     type="checkbox"
                                     onChange={e => {
                                         this.setState({ action: { ...action, post_to_slack: e.target.checked } })
                                     }}
                                     checked={action.post_to_slack}
+                                    disabled={!this.state.slackEnabled}
                                 />
-                                &nbsp;Post to Slack when this action is triggered
+                                &nbsp;Post to Slack when this action is triggered.
                             </label>
+                            <Link to="/setup#slack">
+                                <small>Configure</small>
+                            </Link>
                         </div>
                     ) : (
                         <br />
